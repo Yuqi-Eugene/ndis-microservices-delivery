@@ -39,5 +39,29 @@ public class AppDbContext : DbContext
             entity.HasIndex(x => x.NdisNumber);
             entity.HasIndex(x => x.Email);
         });
+
+        modelBuilder.Entity<Provider>(entity =>
+{
+    entity.HasKey(x => x.Id);
+
+    entity.Property(x => x.Name)
+        .IsRequired()
+        .HasMaxLength(200);
+
+    entity.Property(x => x.Abn)
+        .HasMaxLength(50);
+
+    entity.Property(x => x.ContactEmail)
+        .HasMaxLength(200);
+
+    entity.Property(x => x.ContactPhone)
+        .HasMaxLength(50);
+
+    entity.Property(x => x.Status)
+        .IsRequired()
+        .HasMaxLength(30);
+
+    entity.HasIndex(x => x.Abn);
+});
     }
 }
