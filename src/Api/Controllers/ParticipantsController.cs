@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Api.Controllers;
 
+//this is attributes
 [ApiController]
 [Route("api/[controller]")]
 public class ParticipantsController : ControllerBase
@@ -72,6 +73,7 @@ public class ParticipantsController : ControllerBase
             UpdatedAtUtc = DateTime.UtcNow
         };
 
+        // when we call these two sentences, EF core will generate SQL roughly like INSERT INTO Table Value
         _db.Participants.Add(entity);
         await _db.SaveChangesAsync();
 

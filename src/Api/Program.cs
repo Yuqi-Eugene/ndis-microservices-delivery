@@ -3,9 +3,9 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(); // enables controller systems. without this, controllers (think it as waiters) cannot be discovered.
 builder.Services.AddDbContext<AppDbContext>(opt =>
-    opt.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+    opt.UseNpgsql(builder.Configuration.GetConnectionString("Default"))); //whenever a class asks for AppDbContext, create one to connect to Postgres
 
 // Swagger UI
 builder.Services.AddEndpointsApiExplorer();
