@@ -1,6 +1,8 @@
 # .NET build outputs
 **/bin/
 **/obj/
+# Windows-style folder accidentally created on macOS (backslash is a real character here)
+**/bin\\Debug/
 
 # OS / editor
 .DS_Store

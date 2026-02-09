@@ -12,6 +12,7 @@ public class AppDbContext : DbContext
     public DbSet<Provider> Providers => Set<Provider>();
     public DbSet<Booking> Bookings => Set<Booking>();
     public DbSet<ServiceDelivery> ServiceDeliveries => Set<ServiceDelivery>();
+    public DbSet<Claim> Claims => Set<Claim>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -98,7 +99,7 @@ public class AppDbContext : DbContext
             entity.HasIndex(x => x.ProviderId);
             entity.HasIndex(x => x.ScheduledStartUtc);
         });
-        
+
         modelBuilder.Entity<ServiceDelivery>(entity =>
         {
             entity.HasKey(x => x.Id);
@@ -118,6 +119,26 @@ public class AppDbContext : DbContext
             entity.HasIndex(x => x.BookingId);
             entity.HasIndex(x => x.ActualStartUtc);
             entity.HasIndex(x => x.Status);
+        });
+
+        modelBuilder.Entity<Claim>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Amount)
+                .HasColumnType("decimal(10,2)");
+
+            entity.Property(x => x.Status)
+                .IsRequired()
+                .HasMaxLength(30);
+
+            entity.HasOne(x => x.ServiceDelivery)
+                .WithMany()
+                .HasForeignKey(x => x.ServiceDeliveryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(x => x.ServiceDeliveryId)
+                .IsUnique(); // 一个 delivery 只能生成一个 claim
         });
     }
 }

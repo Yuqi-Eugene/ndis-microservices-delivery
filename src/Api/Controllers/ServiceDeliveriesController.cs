@@ -130,4 +130,39 @@ public class ServiceDeliveriesController : ControllerBase
         await _db.SaveChangesAsync();
         return NoContent();
     }
+
+    // POST /api/servicedeliveries/{id}/approve
+    [HttpPost("{id:guid}/approve")]
+    public async Task<ActionResult<ServiceDelivery>> Approve(Guid id)
+    {
+        var entity = await _db.ServiceDeliveries.FirstOrDefaultAsync(x => x.Id == id);
+        if (entity is null) return NotFound();
+
+        if (entity.Status != "Submitted")
+            return BadRequest(new { message = "Only Submitted deliveries can be approved." });
+
+        entity.Status = "Approved";
+        entity.UpdatedAtUtc = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync();
+        return Ok(entity);
+    }
+
+    // POST /api/servicedeliveries/{id}/reject
+    [HttpPost("{id:guid}/reject")]
+    public async Task<ActionResult<ServiceDelivery>> Reject(Guid id)
+    {
+        var entity = await _db.ServiceDeliveries.FirstOrDefaultAsync(x => x.Id == id);
+        if (entity is null) return NotFound();
+
+        if (entity.Status != "Submitted")
+            return BadRequest(new { message = "Only Submitted deliveries can be rejected." });
+
+        entity.Status = "Rejected";
+        entity.UpdatedAtUtc = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync();
+        return Ok(entity);
+    }
+
 }
