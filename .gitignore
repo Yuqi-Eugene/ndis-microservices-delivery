@@ -1,5 +1,6 @@
 # .NET build outputs
 **/bin/
+**/bin\debug/
 **/obj/
 
 # OS / editor
