@@ -3,11 +3,16 @@ using Api.Dtos.ServiceDeliveries;
 using Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Api.Controllers;
 
+
 [ApiController]
 [Route("api/[controller]")]
+
+
+
 public class ServiceDeliveriesController : ControllerBase
 {
     private readonly AppDbContext _db;
@@ -132,6 +137,7 @@ public class ServiceDeliveriesController : ControllerBase
     }
 
     // POST /api/servicedeliveries/{id}/approve
+    [Authorize(Roles = "Admin")]
     [HttpPost("{id:guid}/approve")]
     public async Task<ActionResult<ServiceDelivery>> Approve(Guid id)
     {
@@ -149,6 +155,7 @@ public class ServiceDeliveriesController : ControllerBase
     }
 
     // POST /api/servicedeliveries/{id}/reject
+    [Authorize(Roles = "Admin")]
     [HttpPost("{id:guid}/reject")]
     public async Task<ActionResult<ServiceDelivery>> Reject(Guid id)
     {
