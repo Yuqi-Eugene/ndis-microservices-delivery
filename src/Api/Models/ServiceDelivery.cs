@@ -17,4 +17,6 @@ public class ServiceDelivery
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 
     public Booking? Booking { get; set; }
+    public string OwnerUserId { get; set; } = "";
+    public string? OwnerEmail { get; set; }
 }

@@ -121,6 +121,12 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             entity.HasIndex(x => x.BookingId);
             entity.HasIndex(x => x.ActualStartUtc);
             entity.HasIndex(x => x.Status);
+            // OwnerUserId is the user ID of the user who created the delivery
+            entity.Property(x => x.OwnerUserId)
+                .IsRequired()
+                .HasMaxLength(450);
+
+            entity.HasIndex(x => x.OwnerUserId);
         });
 
         modelBuilder.Entity<Claim>(entity =>
