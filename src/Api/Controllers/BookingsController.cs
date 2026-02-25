@@ -1,6 +1,6 @@
 using Api.Data;
+using Api.Domain.Entities;
 using Api.Dtos.Bookings;
-using Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 

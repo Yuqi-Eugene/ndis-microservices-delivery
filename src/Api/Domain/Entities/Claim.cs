@@ -1,4 +1,4 @@
-namespace Api.Models;
+namespace Api.Domain.Entities;
 
 public class Claim
 {

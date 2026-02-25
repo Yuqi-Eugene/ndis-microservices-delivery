@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 
-namespace Api.Models;
+namespace Api.Domain.Entities;
 
 public class Provider
 {

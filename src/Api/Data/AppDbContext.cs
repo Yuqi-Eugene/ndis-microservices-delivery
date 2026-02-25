@@ -1,4 +1,4 @@
-using Api.Models;
+using Api.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Api.Auth;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;

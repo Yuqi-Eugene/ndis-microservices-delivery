@@ -1,6 +1,6 @@
 using Api.Data;
 using Api.Dtos.Claims;
-using Api.Models;
+using Api.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 

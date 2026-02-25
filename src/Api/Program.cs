@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Api.Application.Abstractions.Persistence;
+using Api.Infrastructure.Persistence.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,6 +59,9 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddSingleton<JwtTokenService>();
 
+// register MediateR to engine the handlers
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
+
 // Swagger and JWT
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -88,6 +93,8 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+
+builder.Services.AddScoped<IServiceDeliveryRepository, ServiceDeliveryRepository>();
 
 var app = builder.Build();
 
