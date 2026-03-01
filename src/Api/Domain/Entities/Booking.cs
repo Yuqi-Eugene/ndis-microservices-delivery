@@ -1,3 +1,5 @@
+using Api.Domain.Constants;
+
 namespace Api.Domain.Entities;
 
 public class Booking
@@ -14,7 +16,7 @@ public class Booking
     public string ServiceType { get; set; } = "";
 
     // Draft -> Confirmed -> Cancelled
-    public string Status { get; set; } = "Draft";
+    public string Status { get; set; } = BookingStatuses.Draft;
 
     public string? Notes { get; set; }
 

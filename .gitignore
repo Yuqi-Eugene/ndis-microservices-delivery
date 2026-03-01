@@ -4,6 +4,10 @@
 # Windows-style folder accidentally created on macOS (backslash is a real character here)
 **/bin\\Debug/
 
+# tmp
+**/output
+**/tmp
+
 # OS / editor
 .DS_Store
 .vscode/

@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.SignalR;
-
 namespace Api.Domain.Entities;
 
 public class Provider
@@ -15,4 +13,4 @@ public class Provider
     
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
-    }
+}

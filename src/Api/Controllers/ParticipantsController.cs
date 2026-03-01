@@ -1,8 +1,7 @@
-using Api.Data;
+using Api.Application.Participants;
 using Api.Dtos;
-using Api.Domain.Entities;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace Api.Controllers;
 
@@ -11,108 +10,41 @@ namespace Api.Controllers;
 [Route("api/[controller]")]
 public class ParticipantsController : ControllerBase
 {
-    private readonly AppDbContext _db;
+    private readonly IMediator _mediator;
 
-    public ParticipantsController(AppDbContext db) => _db = db;
+    public ParticipantsController(IMediator mediator) => _mediator = mediator;
 
     // GET /api/participants?page=1&pageSize=20&q=gene
     [HttpGet]
-    public async Task<ActionResult<object>> Get(
+    public async Task<ActionResult<ParticipantListResult>> Get(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         [FromQuery] string? q = null)
-    {
-        page = Math.Max(page, 1);
-        pageSize = Math.Clamp(pageSize, 1, 100);
-
-        var query = _db.Participants.AsNoTracking();
-
-        if (!string.IsNullOrWhiteSpace(q))
-        {
-            var keyword = q.Trim().ToLower();
-            query = query.Where(p =>
-                p.FullName.ToLower().Contains(keyword) ||
-                (p.Email != null && p.Email.ToLower().Contains(keyword)) ||
-                (p.NdisNumber != null && p.NdisNumber.ToLower().Contains(keyword)));
-        }
-
-        var total = await query.CountAsync();
-        var items = await query
-            .OrderByDescending(p => p.CreatedAtUtc)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
-
-        return Ok(new { total, page, pageSize, items });
-    }
+        => Ok(await _mediator.Send(new GetParticipantsQuery(page, pageSize, q)));
 
     // GET /api/participants/{id}
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<Participant>> GetById(Guid id)
-    {
-        var p = await _db.Participants.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
-        return p is null ? NotFound() : Ok(p);
-    }
+    public async Task<ActionResult<Api.Domain.Entities.Participant>> GetById(Guid id)
+        => Ok(await _mediator.Send(new GetParticipantByIdQuery(id)));
 
     // POST /api/participants
     [HttpPost]
-    public async Task<ActionResult<Participant>> Create(ParticipantCreateDto dto)
+    public async Task<ActionResult<Api.Domain.Entities.Participant>> Create(ParticipantCreateDto dto)
     {
-        if (string.IsNullOrWhiteSpace(dto.FullName))
-            return BadRequest(new { message = "FullName is required." });
-
-        var entity = new Participant
-        {
-            Id = Guid.NewGuid(),
-            FullName = dto.FullName.Trim(),
-            NdisNumber = dto.NdisNumber?.Trim(),
-            Phone = dto.Phone?.Trim(),
-            Email = dto.Email?.Trim(),
-            Status = "Active",
-            CreatedAtUtc = DateTime.UtcNow,
-            UpdatedAtUtc = DateTime.UtcNow
-        };
-
-        // when we call these two sentences, EF core will generate SQL roughly like INSERT INTO Table Value
-        _db.Participants.Add(entity);
-        await _db.SaveChangesAsync();
-
+        var entity = await _mediator.Send(new CreateParticipantCommand(dto));
         return CreatedAtAction(nameof(GetById), new { id = entity.Id }, entity);
     }
 
     // PUT /api/participants/{id}
     [HttpPut("{id:guid}")]
-    public async Task<ActionResult<Participant>> Update(Guid id, ParticipantUpdateDto dto)
-    {
-        var entity = await _db.Participants.FirstOrDefaultAsync(x => x.Id == id);
-        if (entity is null) return NotFound();
-
-        if (string.IsNullOrWhiteSpace(dto.FullName))
-            return BadRequest(new { message = "FullName is required." });
-
-        entity.FullName = dto.FullName.Trim();
-        entity.NdisNumber = dto.NdisNumber?.Trim();
-        entity.Phone = dto.Phone?.Trim();
-        entity.Email = dto.Email?.Trim();
-
-        if (!string.IsNullOrWhiteSpace(dto.Status))
-            entity.Status = dto.Status.Trim();
-
-        entity.UpdatedAtUtc = DateTime.UtcNow;
-
-        await _db.SaveChangesAsync();
-        return Ok(entity);
-    }
+    public async Task<ActionResult<Api.Domain.Entities.Participant>> Update(Guid id, ParticipantUpdateDto dto)
+        => Ok(await _mediator.Send(new UpdateParticipantCommand(id, dto)));
 
     // DELETE /api/participants/{id}
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var entity = await _db.Participants.FirstOrDefaultAsync(x => x.Id == id);
-        if (entity is null) return NotFound();
-
-        _db.Participants.Remove(entity);
-        await _db.SaveChangesAsync();
+        await _mediator.Send(new DeleteParticipantCommand(id));
         return NoContent();
     }
 }

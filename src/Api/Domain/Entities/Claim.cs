@@ -1,3 +1,5 @@
+using Api.Domain.Constants;
+
 namespace Api.Domain.Entities;
 
 public class Claim
@@ -9,7 +11,7 @@ public class Claim
     public decimal Amount { get; set; }
 
     // Draft -> Submitted -> Paid (后面可扩展)
-    public string Status { get; set; } = "Draft";
+    public string Status { get; set; } = ClaimStatuses.Draft;
 
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 

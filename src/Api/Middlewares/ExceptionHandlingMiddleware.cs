@@ -1,4 +1,5 @@
 using System.Net;
+using System.Security.Authentication;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,6 +20,10 @@ public sealed class ExceptionHandlingMiddleware : IMiddleware
         catch (UnauthorizedAccessException ex)
         {
             await WriteProblem(context, HttpStatusCode.Forbidden, ex.Message);
+        }
+        catch (AuthenticationException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.Unauthorized, ex.Message);
         }
         catch (InvalidOperationException ex)
         {
