@@ -1,29 +1,10 @@
 using Api.Data;
 using Api.Domain.Constants;
 using Api.Domain.Entities;
-using Api.Dtos.Claims;
-using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Api.Application.Claims;
-
-public sealed record GetClaimsQuery() : IRequest<List<Claim>>;
-public sealed record CreateClaimCommand(ClaimCreateDto Dto) : IRequest<Claim>;
-
-public sealed class GetClaimsHandler : IRequestHandler<GetClaimsQuery, List<Claim>>
-{
-    private readonly AppDbContext _db;
-
-    public GetClaimsHandler(AppDbContext db) => _db = db;
-
-    public Task<List<Claim>> Handle(GetClaimsQuery request, CancellationToken ct)
-        => _db.Claims
-            .AsNoTracking()
-            .Include(x => x.ServiceDelivery)
-            .OrderByDescending(x => x.CreatedAtUtc)
-            .ToListAsync(ct);
-}
 
 public sealed class CreateClaimHandler : IRequestHandler<CreateClaimCommand, Claim>
 {
@@ -64,18 +45,5 @@ public sealed class CreateClaimHandler : IRequestHandler<CreateClaimCommand, Cla
         await _db.SaveChangesAsync(ct);
 
         return claim;
-    }
-}
-
-public sealed class CreateClaimCommandValidator : AbstractValidator<CreateClaimCommand>
-{
-    public CreateClaimCommandValidator()
-    {
-        RuleFor(x => x.Dto.ServiceDeliveryId)
-            .NotEmpty()
-            .WithMessage("ServiceDeliveryId is required.");
-        RuleFor(x => x.Dto.Amount)
-            .GreaterThan(0)
-            .WithMessage("Amount must be positive.");
     }
 }
