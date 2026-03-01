@@ -1,3 +1,5 @@
+using Api.Domain.Constants;
+
 namespace Api.Domain.Entities;
 
 public class ServiceDelivery
@@ -9,7 +11,7 @@ public class ServiceDelivery
     public DateTime ActualStartUtc { get; set; }
     public int ActualDurationMinutes { get; set; } = 60;
 
-    public string Status { get; set; } = "Draft"; // Draft -> Submitted
+    public string Status { get; set; } = ServiceDeliveryStatuses.Draft; // Draft -> Submitted
 
     public string? Notes { get; set; }
 

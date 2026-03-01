@@ -1,5 +1,6 @@
 using Api.Data;
 using Api.Dtos.Claims;
+using Api.Domain.Constants;
 using Api.Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -44,7 +45,7 @@ public class ClaimsController : ControllerBase
         if (delivery is null)
             return BadRequest(new { message = "ServiceDelivery not found." });
 
-        if (delivery.Status != "Approved")
+        if (delivery.Status != ServiceDeliveryStatuses.Approved)
             return BadRequest(new { message = "Only Approved deliveries can be claimed." });
 
         var exists = await _db.Claims

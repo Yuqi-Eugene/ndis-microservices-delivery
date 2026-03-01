@@ -1,5 +1,6 @@
 using Api.Application.Abstractions.Persistence;
 using Api.Application.ServiceDeliveries.Commands;
+using Api.Domain.Constants;
 using Api.Domain.Entities;
 using MediatR;
 
@@ -22,10 +23,10 @@ public sealed class SubmitServiceDeliveryHandler
         if (!request.IsAdmin && entity.OwnerUserId != request.CurrentUserId)
             throw new UnauthorizedAccessException("You can only submit your own service deliveries.");        
 
-        if (entity.Status != "Draft")
+        if (entity.Status != ServiceDeliveryStatuses.Draft)
             throw new InvalidOperationException("Only Draft deliveries can be submitted.");
 
-        entity.Status = "Submitted";
+        entity.Status = ServiceDeliveryStatuses.Submitted;
         entity.UpdatedAtUtc = DateTime.UtcNow;
 
         await _repo.SaveChangesAsync(ct);

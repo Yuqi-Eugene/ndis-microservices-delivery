@@ -1,5 +1,6 @@
 using Api.Application.ServiceDeliveries.Commands;
 using Api.Data;
+using Api.Domain.Constants;
 using Api.Domain.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -35,7 +36,7 @@ public sealed class CreateServiceDeliveryHandler
             ActualStartUtc = dto.ActualStartUtc,
             ActualDurationMinutes = dto.ActualDurationMinutes,
             Notes = dto.Notes?.Trim(),
-            Status = "Draft",
+            Status = ServiceDeliveryStatuses.Draft,
             CreatedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow
         };

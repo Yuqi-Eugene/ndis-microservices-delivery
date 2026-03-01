@@ -1,5 +1,6 @@
 using Api.Application.ServiceDeliveries.Commands;
 using Api.Data;
+using Api.Domain.Constants;
 using Api.Domain.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -26,7 +27,7 @@ public sealed class UpdateServiceDeliveryHandler
         if (!request.IsAdmin && entity.OwnerUserId != request.CurrentUserId)
             throw new UnauthorizedAccessException("Forbidden.");
 
-        if (entity.Status != "Draft")
+        if (entity.Status != ServiceDeliveryStatuses.Draft)
             throw new InvalidOperationException("Only Draft deliveries can be updated.");
 
         entity.ActualStartUtc = dto.ActualStartUtc;

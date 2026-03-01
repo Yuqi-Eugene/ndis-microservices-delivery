@@ -1,5 +1,6 @@
 using Api.Application.Abstractions.Persistence;
 using Api.Application.ServiceDeliveries.Commands;
+using Api.Domain.Constants;
 using Api.Domain.Entities;
 using MediatR;
 
@@ -21,10 +22,10 @@ public sealed class ApproveServiceDeliveryHandler
         if (entity is null)
             throw new KeyNotFoundException("ServiceDelivery not found.");
 
-        if (entity.Status != "Submitted")
+        if (entity.Status != ServiceDeliveryStatuses.Submitted)
             throw new InvalidOperationException("Only Submitted deliveries can be approved.");
 
-        entity.Status = "Approved";
+        entity.Status = ServiceDeliveryStatuses.Approved;
         entity.UpdatedAtUtc = DateTime.UtcNow;
 
         await _repo.SaveChangesAsync(ct);
