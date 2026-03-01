@@ -1,31 +1,23 @@
-using Api.Dtos.ServiceDeliveries;
-using Api.Domain.Entities;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
-using MediatR;
 using Api.Application.ServiceDeliveries.Commands;
 using Api.Application.ServiceDeliveries.Queries;
-
+using Api.Domain.Entities;
+using Api.Dtos.ServiceDeliveries;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Api.Controllers;
 
-
 [ApiController]
 [Route("api/[controller]")]
-
-
-
 public class ServiceDeliveriesController : ControllerBase
 {
-    // Get the current user ID and check if the user is an admin
-    private string CurrentUserId =>
-    User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
-
-    private bool IsAdmin =>
-    User.IsInRole("Admin");
-
     private readonly IMediator _mediator;
+
+    // Current user context (read from JWT claims)
+    private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
+    private bool IsAdmin => User.IsInRole("Admin");
 
     public ServiceDeliveriesController(IMediator mediator)
     {
@@ -39,202 +31,113 @@ public class ServiceDeliveriesController : ControllerBase
         [FromQuery] string? status = null,
         CancellationToken ct = default)
     {
-        try
-        {
-            var result = await _mediator.Send(
-                new GetServiceDeliveriesQuery(
-                    bookingId,
-                    status,
-                    CurrentUserId,
-                    IsAdmin),
-                ct);
+        var result = await _mediator.Send(
+            new GetServiceDeliveriesQuery(
+                bookingId,
+                status,
+                CurrentUserId,
+                IsAdmin),
+            ct);
 
-            return Ok(result);
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid();
-        }
+        return Ok(result);
     }
 
     [Authorize(Roles = "Provider,Admin")]
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ServiceDelivery>> GetById(Guid id, CancellationToken ct)
     {
-        try
-        {
-            var result = await _mediator.Send(
-                new GetServiceDeliveryByIdQuery(
-                    id,
-                    CurrentUserId,
-                    IsAdmin),
-                ct);
+        var result = await _mediator.Send(
+            new GetServiceDeliveryByIdQuery(
+                id,
+                CurrentUserId,
+                IsAdmin),
+            ct);
 
-            return Ok(result);
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound();
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid();
-        }
+        return Ok(result);
     }
 
     [Authorize(Roles = "Provider,Admin")]
     [HttpPost]
     public async Task<ActionResult<ServiceDelivery>> Create(ServiceDeliveryCreateDto dto, CancellationToken ct)
     {
-        try
-        {
-            var result = await _mediator.Send(
-                new CreateServiceDeliveryCommand(
-                    dto,
-                    CurrentUserId,
-                    IsAdmin),
-                ct);
+        var result = await _mediator.Send(
+            new CreateServiceDeliveryCommand(
+                dto,
+                CurrentUserId,
+                IsAdmin),
+            ct);
 
-            return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Unauthorized();
-        }
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
     [Authorize(Roles = "Provider,Admin")]
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<ServiceDelivery>> Update(Guid id, ServiceDeliveryUpdateDto dto, CancellationToken ct)
     {
-        try
-        {
-            var result = await _mediator.Send(
-                new UpdateServiceDeliveryCommand(
-                    id,
-                    dto,
-                    CurrentUserId,
-                    IsAdmin),
-                ct);
+        var result = await _mediator.Send(
+            new UpdateServiceDeliveryCommand(
+                id,
+                dto,
+                CurrentUserId,
+                IsAdmin),
+            ct);
 
-            return Ok(result);
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound();
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid();
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        return Ok(result);
     }
 
     [Authorize(Roles = "Provider,Admin")]
     [HttpPost("{id:guid}/submit")]
-
     public async Task<ActionResult> Submit(Guid id, CancellationToken ct)
     {
-        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
-        var isAdmin = User.IsInRole("Admin");
+        var result = await _mediator.Send(
+            new SubmitServiceDeliveryCommand(
+                id,
+                CurrentUserId,
+                IsAdmin),
+            ct);
 
-        try
-        {
-            var result = await _mediator.Send(new SubmitServiceDeliveryCommand(id, currentUserId, isAdmin), ct);
-            return Ok(result);
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound();
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        return Ok(result);
     }
 
     [Authorize(Roles = "Provider,Admin")]
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
-        try
-        {
-            await _mediator.Send(
-                new DeleteServiceDeliveryCommand(
-                    id,
-                    CurrentUserId,
-                    IsAdmin),
-                ct);
+        await _mediator.Send(
+            new DeleteServiceDeliveryCommand(
+                id,
+                CurrentUserId,
+                IsAdmin),
+            ct);
 
-            return NoContent();
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound();
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Forbid();
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        return NoContent();
     }
 
-    // POST /api/servicedeliveries/{id}/approve
     [Authorize(Roles = "Admin")]
     [HttpPost("{id:guid}/approve")]
-
     public async Task<ActionResult> Approve(Guid id, CancellationToken ct)
     {
-        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
-        var isAdmin = User.IsInRole("Admin");
+        var result = await _mediator.Send(
+            new ApproveServiceDeliveryCommand(
+                id,
+                CurrentUserId,
+                IsAdmin),
+            ct);
 
-        try
-        {
-            var result = await _mediator.Send(new ApproveServiceDeliveryCommand(id, currentUserId, isAdmin), ct);
-            return Ok(result);
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound();
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        return Ok(result);
     }
 
-    // POST /api/servicedeliveries/{id}/reject
     [Authorize(Roles = "Admin")]
     [HttpPost("{id:guid}/reject")]
-
     public async Task<ActionResult> Reject(Guid id, CancellationToken ct)
     {
-        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
-        var isAdmin = User.IsInRole("Admin");
+        var result = await _mediator.Send(
+            new RejectServiceDeliveryCommand(
+                id,
+                CurrentUserId,
+                IsAdmin),
+            ct);
 
-        try
-        {
-            var result = await _mediator.Send(new RejectServiceDeliveryCommand(id, currentUserId, isAdmin), ct);
-            return Ok(result);
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound();
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new { message = ex.Message });
-        }
+        return Ok(result);
     }
-
 }

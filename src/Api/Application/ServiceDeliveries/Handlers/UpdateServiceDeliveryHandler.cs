@@ -29,9 +29,6 @@ public sealed class UpdateServiceDeliveryHandler
         if (entity.Status != "Draft")
             throw new InvalidOperationException("Only Draft deliveries can be updated.");
 
-        if (dto.ActualDurationMinutes <= 0 || dto.ActualDurationMinutes > 24 * 60)
-            throw new InvalidOperationException("ActualDurationMinutes is invalid.");
-
         entity.ActualStartUtc = dto.ActualStartUtc;
         entity.ActualDurationMinutes = dto.ActualDurationMinutes;
         entity.Notes = dto.Notes?.Trim();

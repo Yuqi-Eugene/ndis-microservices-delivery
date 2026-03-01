@@ -17,15 +17,6 @@ public sealed class CreateServiceDeliveryHandler
     {
         var dto = request.Dto;
 
-        if (string.IsNullOrWhiteSpace(request.CurrentUserId))
-            throw new UnauthorizedAccessException("Unauthorized.");
-
-        if (dto.BookingId == Guid.Empty)
-            throw new InvalidOperationException("BookingId is required.");
-
-        if (dto.ActualDurationMinutes <= 0 || dto.ActualDurationMinutes > 24 * 60)
-            throw new InvalidOperationException("ActualDurationMinutes is invalid.");
-
         var booking = await _db.Bookings
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == dto.BookingId, ct);

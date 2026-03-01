@@ -8,6 +8,9 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Api.Application.Abstractions.Persistence;
 using Api.Infrastructure.Persistence.Repositories;
+using FluentValidation;
+using MediatR;
+using Api.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -61,6 +64,13 @@ builder.Services.AddSingleton<JwtTokenService>();
 
 // register MediateR to engine the handlers
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
+
+// FluentValidation (scan validators in this assembly)
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+
+// MediatR validation pipeline (runs validators before handlers)
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(Api.Application.Common.Behaviors.ValidationBehavior<,>));
+builder.Services.AddTransient<ExceptionHandlingMiddleware>();
 
 // Swagger and JWT
 builder.Services.AddEndpointsApiExplorer();
@@ -139,6 +149,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
 
 // IMPORTANT ORDER

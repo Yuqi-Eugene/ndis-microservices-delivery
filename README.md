@@ -38,3 +38,32 @@ src/Api/
 - Application: use cases (Commands/Queries + Handlers), depends on abstractions
 - Infrastructure: EF Core, repositories
 - Controllers: keep thin, just HTTP mapping
+
+## Smoke Test The Running API
+
+If the API is already running locally, you can run a full happy-path workflow without Swagger:
+
+```bash
+./scripts/smoke-api.sh
+```
+
+The script will:
+
+- register and log in a new Provider user
+- log in as the seeded Admin user
+- create a Participant, Provider, and Booking
+- confirm the Booking
+- create, submit, and approve a Service Delivery
+- create a Claim
+
+If you are running on a different URL, pass it in:
+
+```bash
+./scripts/smoke-api.sh https://localhost:7199
+```
+
+The script uses these defaults, which you can override with environment variables:
+
+- `ADMIN_EMAIL=admin@ndis.local`
+- `ADMIN_PASSWORD=Admin123$`
+- `PROVIDER_PASSWORD=Provider123$`
