@@ -5,11 +5,13 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace Api.Data;
 
+// AppDbContext is the EF Core gateway to the database.
+// It defines which entities are stored and how they map to tables, columns, keys, and indexes.
 public class AppDbContext : IdentityDbContext<ApplicationUser>
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-    // Add DbSet<T> here later, e.g.
+    // Each DbSet<T> represents a queryable table-like entry point.
     public DbSet<Participant> Participants => Set<Participant>();
     public DbSet<Provider> Providers => Set<Provider>();
     public DbSet<Booking> Bookings => Set<Booking>();
@@ -18,12 +20,15 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // Important: call the Identity base configuration first so ASP.NET Identity tables are mapped correctly.
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.Entity<Participant>(entity =>
         {
+            // Primary key.
             entity.HasKey(x => x.Id);
 
+            // Required field + max length becomes both a business constraint and a database schema rule.
             entity.Property(x => x.FullName)
                 .IsRequired()
                 .HasMaxLength(200);
@@ -41,7 +46,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
                 .IsRequired()
                 .HasMaxLength(30);
 
-            // 可选：常用索引
+            // Indexes improve lookup speed for common filters/searches.
             entity.HasIndex(x => x.NdisNumber);
             entity.HasIndex(x => x.Email);
         });
@@ -85,18 +90,20 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.Notes)
                 .HasMaxLength(2000);
 
-            // Relationships
+            // A booking must reference an existing participant.
+            // Restrict delete avoids accidentally deleting a participant that is still used by a booking.
             entity.HasOne(x => x.Participant)
                 .WithMany()
                 .HasForeignKey(x => x.ParticipantId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // A booking must also reference an existing provider.
             entity.HasOne(x => x.Provider)
                 .WithMany()
                 .HasForeignKey(x => x.ProviderId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Helpful indexes for filtering
+            // These indexes support common query patterns.
             entity.HasIndex(x => x.ParticipantId);
             entity.HasIndex(x => x.ProviderId);
             entity.HasIndex(x => x.ScheduledStartUtc);
@@ -113,15 +120,16 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(x => x.Notes)
                 .HasMaxLength(2000);
 
+            // Every delivery belongs to one booking.
             entity.HasOne(x => x.Booking)
-                .WithMany() // 暂时不在 Booking 上加集合，保持简单
+                .WithMany() // No collection on Booking yet; the model stays intentionally simple.
                 .HasForeignKey(x => x.BookingId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasIndex(x => x.BookingId);
             entity.HasIndex(x => x.ActualStartUtc);
             entity.HasIndex(x => x.Status);
-            // OwnerUserId is the user ID of the user who created the delivery
+            // OwnerUserId links the delivery to the authenticated Identity user who created it.
             entity.Property(x => x.OwnerUserId)
                 .IsRequired()
                 .HasMaxLength(450);
@@ -146,7 +154,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
                 .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasIndex(x => x.ServiceDeliveryId)
-                .IsUnique(); // 一个 delivery 只能生成一个 claim
+                .IsUnique(); // Enforces the business rule: one delivery can produce only one claim.
         });
     }
 }

@@ -6,6 +6,8 @@ using Microsoft.Extensions.Logging;
 
 namespace Api.Middlewares;
 
+// This middleware centralizes exception-to-HTTP translation.
+// Controllers and handlers can throw meaningful exceptions, and this layer converts them into API-safe responses.
 public sealed class ExceptionHandlingMiddleware : IMiddleware
 {
     private readonly ILogger<ExceptionHandlingMiddleware> _logger;
@@ -19,35 +21,42 @@ public sealed class ExceptionHandlingMiddleware : IMiddleware
     {
         try
         {
+            // Continue to the next middleware/controller in the pipeline.
             await next(context);
         }
         catch (KeyNotFoundException ex)
         {
+            // Missing resources become 404 responses.
             _logger.LogInformation(ex, "Resource not found for {Method} {Path}", context.Request.Method, context.Request.Path);
             await WriteProblem(context, HttpStatusCode.NotFound, ex.Message);
         }
         catch (UnauthorizedAccessException ex)
         {
+            // This project uses UnauthorizedAccessException to mean "you are authenticated, but not allowed".
             _logger.LogWarning(ex, "Forbidden request for {Method} {Path}", context.Request.Method, context.Request.Path);
             await WriteProblem(context, HttpStatusCode.Forbidden, ex.Message);
         }
         catch (AuthenticationException ex)
         {
+            // Authentication failures become 401 responses.
             _logger.LogWarning(ex, "Authentication failed for {Method} {Path}", context.Request.Method, context.Request.Path);
             await WriteProblem(context, HttpStatusCode.Unauthorized, ex.Message);
         }
         catch (InvalidOperationException ex)
         {
+            // InvalidOperationException is used here for domain/business rule violations.
             _logger.LogWarning(ex, "Invalid operation for {Method} {Path}", context.Request.Method, context.Request.Path);
             await WriteProblem(context, HttpStatusCode.BadRequest, ex.Message);
         }
         catch (ValidationException ex)
         {
+            // FluentValidation failures become structured validation payloads.
             _logger.LogWarning(ex, "Validation failed for {Method} {Path}", context.Request.Method, context.Request.Path);
             await WriteValidationProblem(context, ex);
         }
         catch (Exception ex)
         {
+            // Any unknown exception is treated as a server error without leaking internal details.
             _logger.LogError(ex, "Unhandled exception for {Method} {Path}", context.Request.Method, context.Request.Path);
             await WriteProblem(context, HttpStatusCode.InternalServerError, "An unexpected error occurred.");
         }
@@ -58,6 +67,7 @@ public sealed class ExceptionHandlingMiddleware : IMiddleware
         context.Response.StatusCode = (int)code;
         context.Response.ContentType = "application/problem+json";
 
+        // ProblemDetails is the standard ASP.NET Core format for machine-readable API errors.
         var problem = new ProblemDetails
         {
             Status = (int)code,
@@ -73,6 +83,7 @@ public sealed class ExceptionHandlingMiddleware : IMiddleware
         context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
         context.Response.ContentType = "application/problem+json";
 
+        // Group validation failures by property name so clients can display field-specific errors cleanly.
         var problem = new ValidationProblemDetails(
             ex.Errors
                 .GroupBy(x => x.PropertyName)

@@ -15,7 +15,8 @@ public class ServiceDeliveriesController : ControllerBase
 {
     private readonly IMediator _mediator;
 
-    // Current user context (read from JWT claims)
+    // These helpers read the authenticated user from HttpContext.User.
+    // The JWT middleware populates this principal after token validation succeeds.
     private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
     private bool IsAdmin => User.IsInRole("Admin");
 
@@ -31,6 +32,7 @@ public class ServiceDeliveriesController : ControllerBase
         [FromQuery] string? status = null,
         CancellationToken ct = default)
     {
+        // Controllers should stay thin: collect HTTP input, forward to a request object, return HTTP output.
         var result = await _mediator.Send(
             new GetServiceDeliveriesQuery(
                 bookingId,
@@ -60,6 +62,7 @@ public class ServiceDeliveriesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ServiceDeliveryResponseDto>> Create(ServiceDeliveryCreateDto dto, CancellationToken ct)
     {
+        // Passing user context into the command allows the handler to enforce ownership rules.
         var result = await _mediator.Send(
             new CreateServiceDeliveryCommand(
                 dto,
@@ -67,6 +70,7 @@ public class ServiceDeliveriesController : ControllerBase
                 IsAdmin),
             ct);
 
+        // 201 Created is the correct REST response when a new resource is created successfully.
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
@@ -117,6 +121,7 @@ public class ServiceDeliveriesController : ControllerBase
     [HttpPost("{id:guid}/approve")]
     public async Task<ActionResult> Approve(Guid id, CancellationToken ct)
     {
+        // Approval is admin-only because it represents a privileged workflow decision.
         var result = await _mediator.Send(
             new ApproveServiceDeliveryCommand(
                 id,

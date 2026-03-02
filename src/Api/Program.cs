@@ -12,24 +12,33 @@ using FluentValidation;
 using MediatR;
 using Api.Middlewares;
 
+// Program.cs is the application's composition root.
+// In ASP.NET Core, this is where you register services, configure middleware,
+// and define how the process starts.
 var builder = WebApplication.CreateBuilder(args);
 
+// Adds MVC controller support so attribute-routed API controllers can handle HTTP requests.
 builder.Services.AddControllers();
 
+// Registers EF Core with PostgreSQL.
+// AppDbContext will be resolved from DI anywhere it is needed.
 builder.Services.AddDbContext<AppDbContext>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
-// Identity
+// Identity manages users, passwords, and roles.
+// This project stores Identity data in the same PostgreSQL database via AppDbContext.
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 
-// JWT
+// Read JWT settings once during startup so authentication can validate tokens later.
 var jwtKey = builder.Configuration["Jwt:Key"];
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];
 var jwtAudience = builder.Configuration["Jwt:Audience"];
 
+// Fail fast if required auth settings are missing.
+// Startup validation is better than discovering bad configuration only after the first login request.
 if (string.IsNullOrWhiteSpace(jwtKey) ||
     string.IsNullOrWhiteSpace(jwtIssuer) ||
     string.IsNullOrWhiteSpace(jwtAudience))
@@ -41,11 +50,13 @@ if (string.IsNullOrWhiteSpace(jwtKey) ||
 builder.Services
     .AddAuthentication(options =>
     {
+        // Every [Authorize] endpoint will use JWT bearer tokens unless overridden.
         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
         options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
     })
     .AddJwtBearer(options =>
     {
+        // These rules define what a "valid" token means for this API.
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
@@ -60,20 +71,22 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
+// Application services used by handlers/controllers.
 builder.Services.AddSingleton<JwtTokenService>();
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
-// register MediateR to engine the handlers
+// Registers MediatR so controllers can send commands/queries instead of calling handlers directly.
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
-// FluentValidation (scan validators in this assembly)
+// Discovers and registers FluentValidation validators from this project assembly.
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
-// MediatR validation pipeline (runs validators before handlers)
+// Pipeline behaviors wrap every MediatR request.
+// ValidationBehavior runs before the handler so bad requests fail early and consistently.
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(Api.Application.Common.Behaviors.ValidationBehavior<,>));
 builder.Services.AddTransient<ExceptionHandlingMiddleware>();
 
-// Swagger and JWT
+// Swagger is enabled for local development to make the API easy to inspect and test.
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -107,7 +120,8 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// Seed roles + default admin (Development)
+// Seed roles and a default admin account.
+// This keeps local development friction low and gives the smoke test a known admin login.
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
@@ -116,6 +130,7 @@ using (var scope = app.Services.CreateScope())
     var roles = new[] { "Admin", "Provider" };
     foreach (var role in roles)
     {
+        // Role creation is idempotent: only create missing roles.
         if (!await roleManager.RoleExistsAsync(role))
             await roleManager.CreateAsync(new IdentityRole(role));
     }
@@ -128,6 +143,7 @@ using (var scope = app.Services.CreateScope())
         var admin = await userManager.FindByEmailAsync(adminEmail);
         if (admin is null)
         {
+            // The seeded admin exists only for development convenience.
             admin = new ApplicationUser
             {
                 UserName = adminEmail,
@@ -144,17 +160,22 @@ using (var scope = app.Services.CreateScope())
 
 if (app.Environment.IsDevelopment())
 {
+    // Swagger UI is intentionally limited to Development.
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+// Global exception translation should run early so downstream failures become consistent ProblemDetails responses.
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
 
-// IMPORTANT ORDER
+// Order matters:
+// 1. Authentication reads the bearer token and builds HttpContext.User.
+// 2. Authorization evaluates [Authorize] attributes using that user principal.
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Connect attribute-routed controllers to the request pipeline.
 app.MapControllers();
 
 app.Run();

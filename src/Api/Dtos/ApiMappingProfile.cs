@@ -9,11 +9,14 @@ using AutoMapper;
 
 namespace Api.Dtos;
 
+// AutoMapper profiles define how internal models are projected into outward-facing DTOs.
+// Centralizing mappings avoids repetitive manual copying in every handler.
 public sealed class ApiMappingProfile : Profile
 {
     public ApiMappingProfile()
     {
         CreateMap<Participant, ParticipantResponseDto>();
+        // Record DTOs with constructor parameters sometimes need explicit constructor mapping.
         CreateMap<ParticipantListResult, ParticipantListResponseDto>()
             .ForCtorParam(nameof(ParticipantListResponseDto.Items), opt => opt.MapFrom(src => src.Items));
 
