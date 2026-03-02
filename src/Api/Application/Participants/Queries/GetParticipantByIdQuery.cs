@@ -1,6 +1,6 @@
-using Api.Domain.Entities;
+using Api.Dtos.Participants;
 using MediatR;
 
 namespace Api.Application.Participants;
 
-public sealed record GetParticipantByIdQuery(Guid Id) : IRequest<Participant>;
+public sealed record GetParticipantByIdQuery(Guid Id) : IRequest<ParticipantResponseDto>;

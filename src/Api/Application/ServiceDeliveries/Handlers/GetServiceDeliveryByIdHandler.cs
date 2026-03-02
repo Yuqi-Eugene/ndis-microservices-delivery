@@ -1,23 +1,28 @@
 using Api.Application.ServiceDeliveries.Queries;
 using Api.Data;
-using Api.Domain.Entities;
+using Api.Dtos.ServiceDeliveries;
+using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Api.Application.ServiceDeliveries.Handlers;
 
 public sealed class GetServiceDeliveryByIdHandler
-    : IRequestHandler<GetServiceDeliveryByIdQuery, ServiceDelivery>
+    : IRequestHandler<GetServiceDeliveryByIdQuery, ServiceDeliveryResponseDto>
 {
     private readonly AppDbContext _db;
+    private readonly IMapper _mapper;
 
-    public GetServiceDeliveryByIdHandler(AppDbContext db) => _db = db;
+    public GetServiceDeliveryByIdHandler(AppDbContext db, IMapper mapper)
+    {
+        _db = db;
+        _mapper = mapper;
+    }
 
-    public async Task<ServiceDelivery> Handle(GetServiceDeliveryByIdQuery request, CancellationToken ct)
+    public async Task<ServiceDeliveryResponseDto> Handle(GetServiceDeliveryByIdQuery request, CancellationToken ct)
     {
         var entity = await _db.ServiceDeliveries
             .AsNoTracking()
-            .Include(x => x.Booking)
             .FirstOrDefaultAsync(x => x.Id == request.Id, ct);
 
         if (entity is null)
@@ -26,6 +31,6 @@ public sealed class GetServiceDeliveryByIdHandler
         if (!request.IsAdmin && entity.OwnerUserId != request.CurrentUserId)
             throw new UnauthorizedAccessException("Forbidden.");
 
-        return entity;
+        return _mapper.Map<ServiceDeliveryResponseDto>(entity);
     }
 }

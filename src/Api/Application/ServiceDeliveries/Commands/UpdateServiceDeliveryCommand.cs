@@ -1,4 +1,3 @@
-using Api.Domain.Entities;
 using Api.Dtos.ServiceDeliveries;
 using MediatR;
 
@@ -9,4 +8,4 @@ public sealed record UpdateServiceDeliveryCommand(
     ServiceDeliveryUpdateDto Dto,
     string CurrentUserId,
     bool IsAdmin
-) : IRequest<ServiceDelivery>;
+) : IRequest<ServiceDeliveryResponseDto>;

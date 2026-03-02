@@ -1,18 +1,25 @@
 using Api.Data;
 using Api.Domain.Constants;
 using Api.Domain.Entities;
+using Api.Dtos.Bookings;
+using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Api.Application.Bookings;
 
-public sealed class CreateBookingHandler : IRequestHandler<CreateBookingCommand, Booking>
+public sealed class CreateBookingHandler : IRequestHandler<CreateBookingCommand, BookingResponseDto>
 {
     private readonly AppDbContext _db;
+    private readonly IMapper _mapper;
 
-    public CreateBookingHandler(AppDbContext db) => _db = db;
+    public CreateBookingHandler(AppDbContext db, IMapper mapper)
+    {
+        _db = db;
+        _mapper = mapper;
+    }
 
-    public async Task<Booking> Handle(CreateBookingCommand request, CancellationToken ct)
+    public async Task<BookingResponseDto> Handle(CreateBookingCommand request, CancellationToken ct)
     {
         var dto = request.Dto;
 
@@ -41,6 +48,6 @@ public sealed class CreateBookingHandler : IRequestHandler<CreateBookingCommand,
         _db.Bookings.Add(entity);
         await _db.SaveChangesAsync(ct);
 
-        return entity;
+        return _mapper.Map<BookingResponseDto>(entity);
     }
 }

@@ -1,5 +1,5 @@
 using MediatR;
-using Api.Domain.Entities;
+using Api.Dtos.ServiceDeliveries;
 
 namespace Api.Application.ServiceDeliveries.Commands;
 
@@ -7,4 +7,4 @@ public sealed record ApproveServiceDeliveryCommand(
     Guid Id,
     string CurrentUserId,
     bool IsAdmin
-) : IRequest<ServiceDelivery>;
+) : IRequest<ServiceDeliveryResponseDto>;

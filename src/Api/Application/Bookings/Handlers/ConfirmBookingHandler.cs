@@ -1,18 +1,24 @@
 using Api.Data;
 using Api.Domain.Constants;
-using Api.Domain.Entities;
+using Api.Dtos.Bookings;
+using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Api.Application.Bookings;
 
-public sealed class ConfirmBookingHandler : IRequestHandler<ConfirmBookingCommand, Booking>
+public sealed class ConfirmBookingHandler : IRequestHandler<ConfirmBookingCommand, BookingResponseDto>
 {
     private readonly AppDbContext _db;
+    private readonly IMapper _mapper;
 
-    public ConfirmBookingHandler(AppDbContext db) => _db = db;
+    public ConfirmBookingHandler(AppDbContext db, IMapper mapper)
+    {
+        _db = db;
+        _mapper = mapper;
+    }
 
-    public async Task<Booking> Handle(ConfirmBookingCommand request, CancellationToken ct)
+    public async Task<BookingResponseDto> Handle(ConfirmBookingCommand request, CancellationToken ct)
     {
         var entity = await _db.Bookings.FirstOrDefaultAsync(x => x.Id == request.Id, ct)
             ?? throw new KeyNotFoundException("Booking not found.");
@@ -24,6 +30,6 @@ public sealed class ConfirmBookingHandler : IRequestHandler<ConfirmBookingComman
         entity.UpdatedAtUtc = DateTime.UtcNow;
 
         await _db.SaveChangesAsync(ct);
-        return entity;
+        return _mapper.Map<BookingResponseDto>(entity);
     }
 }

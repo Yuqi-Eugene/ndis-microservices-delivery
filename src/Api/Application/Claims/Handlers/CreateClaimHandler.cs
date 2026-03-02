@@ -1,18 +1,25 @@
 using Api.Data;
 using Api.Domain.Constants;
 using Api.Domain.Entities;
+using Api.Dtos.Claims;
+using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Api.Application.Claims;
 
-public sealed class CreateClaimHandler : IRequestHandler<CreateClaimCommand, Claim>
+public sealed class CreateClaimHandler : IRequestHandler<CreateClaimCommand, ClaimResponseDto>
 {
     private readonly AppDbContext _db;
+    private readonly IMapper _mapper;
 
-    public CreateClaimHandler(AppDbContext db) => _db = db;
+    public CreateClaimHandler(AppDbContext db, IMapper mapper)
+    {
+        _db = db;
+        _mapper = mapper;
+    }
 
-    public async Task<Claim> Handle(CreateClaimCommand request, CancellationToken ct)
+    public async Task<ClaimResponseDto> Handle(CreateClaimCommand request, CancellationToken ct)
     {
         var dto = request.Dto;
 
@@ -44,6 +51,6 @@ public sealed class CreateClaimHandler : IRequestHandler<CreateClaimCommand, Cla
         _db.Claims.Add(claim);
         await _db.SaveChangesAsync(ct);
 
-        return claim;
+        return _mapper.Map<ClaimResponseDto>(claim);
     }
 }

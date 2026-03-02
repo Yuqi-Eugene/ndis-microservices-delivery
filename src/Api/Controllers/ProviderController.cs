@@ -1,4 +1,5 @@
 using Api.Application.Providers;
+using Api.Dtos;
 using Api.Dtos.Providers;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -14,28 +15,28 @@ public class ProvidersController : ControllerBase
     public ProvidersController(IMediator mediator) => _mediator = mediator;
 
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Api.Domain.Entities.Provider>>> Get()
-        => Ok(await _mediator.Send(new GetProvidersQuery()));
+    public async Task<ActionResult<CollectionResponseDto<ProviderResponseDto>>> Get(CancellationToken ct = default)
+        => Ok(await _mediator.Send(new GetProvidersQuery(), ct));
 
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<Api.Domain.Entities.Provider>> GetById(Guid id)
-        => Ok(await _mediator.Send(new GetProviderByIdQuery(id)));
+    public async Task<ActionResult<ProviderResponseDto>> GetById(Guid id, CancellationToken ct = default)
+        => Ok(await _mediator.Send(new GetProviderByIdQuery(id), ct));
 
     [HttpPost]
-    public async Task<ActionResult<Api.Domain.Entities.Provider>> Create(ProviderCreateDto dto)
+    public async Task<ActionResult<ProviderResponseDto>> Create(ProviderCreateDto dto, CancellationToken ct = default)
     {
-        var entity = await _mediator.Send(new CreateProviderCommand(dto));
-        return CreatedAtAction(nameof(GetById), new { id = entity.Id }, entity);
+        var response = await _mediator.Send(new CreateProviderCommand(dto), ct);
+        return CreatedAtAction(nameof(GetById), new { id = response.Id }, response);
     }
 
     [HttpPut("{id:guid}")]
-    public async Task<ActionResult<Api.Domain.Entities.Provider>> Update(Guid id, ProviderUpdateDto dto)
-        => Ok(await _mediator.Send(new UpdateProviderCommand(id, dto)));
+    public async Task<ActionResult<ProviderResponseDto>> Update(Guid id, ProviderUpdateDto dto, CancellationToken ct = default)
+        => Ok(await _mediator.Send(new UpdateProviderCommand(id, dto), ct));
 
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct = default)
     {
-        await _mediator.Send(new DeleteProviderCommand(id));
+        await _mediator.Send(new DeleteProviderCommand(id), ct);
         return NoContent();
     }
 }

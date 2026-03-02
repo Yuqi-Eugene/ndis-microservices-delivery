@@ -15,11 +15,11 @@ public class AuthController : ControllerBase
 
     // POST /api/auth/register (creates a Provider user by default)
     [HttpPost("register")]
-    public async Task<ActionResult<RegisterResult>> Register(RegisterDto dto)
-        => Ok(await _mediator.Send(new RegisterCommand(dto)));
+    public async Task<ActionResult<RegisterResult>> Register(RegisterDto dto, CancellationToken ct = default)
+        => Ok(await _mediator.Send(new RegisterCommand(dto), ct));
 
     // POST /api/auth/login
     [HttpPost("login")]
-    public async Task<ActionResult<LoginResult>> Login(LoginDto dto)
-        => Ok(await _mediator.Send(new LoginCommand(dto)));
+    public async Task<ActionResult<LoginResult>> Login(LoginDto dto, CancellationToken ct = default)
+        => Ok(await _mediator.Send(new LoginCommand(dto), ct));
 }

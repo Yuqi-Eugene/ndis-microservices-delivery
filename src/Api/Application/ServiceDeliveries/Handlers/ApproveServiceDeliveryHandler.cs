@@ -1,24 +1,31 @@
-using Api.Application.Abstractions.Persistence;
 using Api.Application.ServiceDeliveries.Commands;
+using Api.Data;
 using Api.Domain.Constants;
-using Api.Domain.Entities;
+using Api.Dtos.ServiceDeliveries;
+using AutoMapper;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Api.Application.ServiceDeliveries.Handlers;
 
 public sealed class ApproveServiceDeliveryHandler
-    : IRequestHandler<ApproveServiceDeliveryCommand, ServiceDelivery>
+    : IRequestHandler<ApproveServiceDeliveryCommand, ServiceDeliveryResponseDto>
 {
-    private readonly IServiceDeliveryRepository _repo;
+    private readonly AppDbContext _db;
+    private readonly IMapper _mapper;
 
-    public ApproveServiceDeliveryHandler(IServiceDeliveryRepository repo) => _repo = repo;
+    public ApproveServiceDeliveryHandler(AppDbContext db, IMapper mapper)
+    {
+        _db = db;
+        _mapper = mapper;
+    }
 
-    public async Task<ServiceDelivery> Handle(ApproveServiceDeliveryCommand request, CancellationToken ct)
+    public async Task<ServiceDeliveryResponseDto> Handle(ApproveServiceDeliveryCommand request, CancellationToken ct)
     {
         if (!request.IsAdmin)
             throw new UnauthorizedAccessException("Admin role required.");
 
-        var entity = await _repo.GetByIdAsync(request.Id, ct);
+        var entity = await _db.ServiceDeliveries.FirstOrDefaultAsync(x => x.Id == request.Id, ct);
         if (entity is null)
             throw new KeyNotFoundException("ServiceDelivery not found.");
 
@@ -28,7 +35,7 @@ public sealed class ApproveServiceDeliveryHandler
         entity.Status = ServiceDeliveryStatuses.Approved;
         entity.UpdatedAtUtc = DateTime.UtcNow;
 
-        await _repo.SaveChangesAsync(ct);
-        return entity;
+        await _db.SaveChangesAsync(ct);
+        return _mapper.Map<ServiceDeliveryResponseDto>(entity);
     }
 }

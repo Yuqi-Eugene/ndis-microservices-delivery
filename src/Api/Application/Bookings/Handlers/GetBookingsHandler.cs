@@ -1,22 +1,27 @@
 using Api.Data;
-using Api.Domain.Entities;
+using Api.Dtos;
+using Api.Dtos.Bookings;
+using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Api.Application.Bookings;
 
-public sealed class GetBookingsHandler : IRequestHandler<GetBookingsQuery, List<Booking>>
+public sealed class GetBookingsHandler : IRequestHandler<GetBookingsQuery, CollectionResponseDto<BookingResponseDto>>
 {
     private readonly AppDbContext _db;
+    private readonly IMapper _mapper;
 
-    public GetBookingsHandler(AppDbContext db) => _db = db;
+    public GetBookingsHandler(AppDbContext db, IMapper mapper)
+    {
+        _db = db;
+        _mapper = mapper;
+    }
 
-    public async Task<List<Booking>> Handle(GetBookingsQuery request, CancellationToken ct)
+    public async Task<CollectionResponseDto<BookingResponseDto>> Handle(GetBookingsQuery request, CancellationToken ct)
     {
         var query = _db.Bookings
             .AsNoTracking()
-            .Include(x => x.Participant)
-            .Include(x => x.Provider)
             .AsQueryable();
 
         if (request.ParticipantId.HasValue)
@@ -31,9 +36,12 @@ public sealed class GetBookingsHandler : IRequestHandler<GetBookingsQuery, List<
         if (request.ToUtc.HasValue)
             query = query.Where(x => x.ScheduledStartUtc <= request.ToUtc.Value);
 
-        return await query
+        var items = await query
             .OrderByDescending(x => x.CreatedAtUtc)
             .Take(200)
             .ToListAsync(ct);
+
+        var responseItems = _mapper.Map<List<BookingResponseDto>>(items);
+        return new CollectionResponseDto<BookingResponseDto>(responseItems.Count, responseItems);
     }
 }

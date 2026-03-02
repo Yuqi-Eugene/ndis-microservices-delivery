@@ -1,6 +1,6 @@
 using Api.Application.ServiceDeliveries.Commands;
 using Api.Application.ServiceDeliveries.Queries;
-using Api.Domain.Entities;
+using Api.Dtos;
 using Api.Dtos.ServiceDeliveries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -26,7 +26,7 @@ public class ServiceDeliveriesController : ControllerBase
 
     [Authorize(Roles = "Provider,Admin")]
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ServiceDelivery>>> Get(
+    public async Task<ActionResult<CollectionResponseDto<ServiceDeliveryResponseDto>>> Get(
         [FromQuery] Guid? bookingId = null,
         [FromQuery] string? status = null,
         CancellationToken ct = default)
@@ -44,7 +44,7 @@ public class ServiceDeliveriesController : ControllerBase
 
     [Authorize(Roles = "Provider,Admin")]
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<ServiceDelivery>> GetById(Guid id, CancellationToken ct)
+    public async Task<ActionResult<ServiceDeliveryResponseDto>> GetById(Guid id, CancellationToken ct)
     {
         var result = await _mediator.Send(
             new GetServiceDeliveryByIdQuery(
@@ -58,7 +58,7 @@ public class ServiceDeliveriesController : ControllerBase
 
     [Authorize(Roles = "Provider,Admin")]
     [HttpPost]
-    public async Task<ActionResult<ServiceDelivery>> Create(ServiceDeliveryCreateDto dto, CancellationToken ct)
+    public async Task<ActionResult<ServiceDeliveryResponseDto>> Create(ServiceDeliveryCreateDto dto, CancellationToken ct)
     {
         var result = await _mediator.Send(
             new CreateServiceDeliveryCommand(
@@ -72,7 +72,7 @@ public class ServiceDeliveriesController : ControllerBase
 
     [Authorize(Roles = "Provider,Admin")]
     [HttpPut("{id:guid}")]
-    public async Task<ActionResult<ServiceDelivery>> Update(Guid id, ServiceDeliveryUpdateDto dto, CancellationToken ct)
+    public async Task<ActionResult<ServiceDeliveryResponseDto>> Update(Guid id, ServiceDeliveryUpdateDto dto, CancellationToken ct)
     {
         var result = await _mediator.Send(
             new UpdateServiceDeliveryCommand(

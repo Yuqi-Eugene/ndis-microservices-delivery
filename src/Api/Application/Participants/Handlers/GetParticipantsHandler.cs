@@ -1,16 +1,23 @@
 using Api.Data;
+using Api.Dtos.Participants;
+using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Api.Application.Participants;
 
-public sealed class GetParticipantsHandler : IRequestHandler<GetParticipantsQuery, ParticipantListResult>
+public sealed class GetParticipantsHandler : IRequestHandler<GetParticipantsQuery, ParticipantListResponseDto>
 {
     private readonly AppDbContext _db;
+    private readonly IMapper _mapper;
 
-    public GetParticipantsHandler(AppDbContext db) => _db = db;
+    public GetParticipantsHandler(AppDbContext db, IMapper mapper)
+    {
+        _db = db;
+        _mapper = mapper;
+    }
 
-    public async Task<ParticipantListResult> Handle(GetParticipantsQuery request, CancellationToken ct)
+    public async Task<ParticipantListResponseDto> Handle(GetParticipantsQuery request, CancellationToken ct)
     {
         var query = _db.Participants.AsNoTracking().AsQueryable();
 
@@ -30,6 +37,7 @@ public sealed class GetParticipantsHandler : IRequestHandler<GetParticipantsQuer
             .Take(request.PageSize)
             .ToListAsync(ct);
 
-        return new ParticipantListResult(total, request.Page, request.PageSize, items);
+        return _mapper.Map<ParticipantListResponseDto>(
+            new ParticipantListResult(total, request.Page, request.PageSize, items));
     }
 }

@@ -2,19 +2,26 @@ using Api.Application.ServiceDeliveries.Commands;
 using Api.Data;
 using Api.Domain.Constants;
 using Api.Domain.Entities;
+using Api.Dtos.ServiceDeliveries;
+using AutoMapper;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Api.Application.ServiceDeliveries.Handlers;
 
 public sealed class CreateServiceDeliveryHandler
-    : IRequestHandler<CreateServiceDeliveryCommand, ServiceDelivery>
+    : IRequestHandler<CreateServiceDeliveryCommand, ServiceDeliveryResponseDto>
 {
     private readonly AppDbContext _db;
+    private readonly IMapper _mapper;
 
-    public CreateServiceDeliveryHandler(AppDbContext db) => _db = db;
+    public CreateServiceDeliveryHandler(AppDbContext db, IMapper mapper)
+    {
+        _db = db;
+        _mapper = mapper;
+    }
 
-    public async Task<ServiceDelivery> Handle(CreateServiceDeliveryCommand request, CancellationToken ct)
+    public async Task<ServiceDeliveryResponseDto> Handle(CreateServiceDeliveryCommand request, CancellationToken ct)
     {
         var dto = request.Dto;
 
@@ -25,7 +32,7 @@ public sealed class CreateServiceDeliveryHandler
         if (booking is null)
             throw new InvalidOperationException("BookingId not found.");
 
-        if (booking.Status != "Confirmed")
+        if (booking.Status != BookingStatuses.Confirmed)
             throw new InvalidOperationException("Booking must be Confirmed before creating a delivery.");
 
         var entity = new ServiceDelivery
@@ -44,6 +51,6 @@ public sealed class CreateServiceDeliveryHandler
         _db.ServiceDeliveries.Add(entity);
         await _db.SaveChangesAsync(ct);
 
-        return entity;
+        return _mapper.Map<ServiceDeliveryResponseDto>(entity);
     }
 }

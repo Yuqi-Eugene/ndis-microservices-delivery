@@ -1,4 +1,5 @@
 using Api.Application.Bookings;
+using Api.Dtos;
 using Api.Dtos.Bookings;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
@@ -15,36 +16,37 @@ public class BookingsController : ControllerBase
 
     // GET /api/bookings?participantId=...&providerId=...&fromUtc=...&toUtc=...
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Api.Domain.Entities.Booking>>> Get(
+    public async Task<ActionResult<CollectionResponseDto<BookingResponseDto>>> Get(
         [FromQuery] Guid? participantId = null,
         [FromQuery] Guid? providerId = null,
         [FromQuery] DateTime? fromUtc = null,
-        [FromQuery] DateTime? toUtc = null)
-        => Ok(await _mediator.Send(new GetBookingsQuery(participantId, providerId, fromUtc, toUtc)));
+        [FromQuery] DateTime? toUtc = null,
+        CancellationToken ct = default)
+        => Ok(await _mediator.Send(new GetBookingsQuery(participantId, providerId, fromUtc, toUtc), ct));
 
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<Api.Domain.Entities.Booking>> GetById(Guid id)
-        => Ok(await _mediator.Send(new GetBookingByIdQuery(id)));
+    public async Task<ActionResult<BookingResponseDto>> GetById(Guid id, CancellationToken ct = default)
+        => Ok(await _mediator.Send(new GetBookingByIdQuery(id), ct));
 
     [HttpPost]
-    public async Task<ActionResult<Api.Domain.Entities.Booking>> Create(BookingCreateDto dto)
+    public async Task<ActionResult<BookingResponseDto>> Create(BookingCreateDto dto, CancellationToken ct = default)
     {
-        var entity = await _mediator.Send(new CreateBookingCommand(dto));
-        return CreatedAtAction(nameof(GetById), new { id = entity.Id }, entity);
+        var response = await _mediator.Send(new CreateBookingCommand(dto), ct);
+        return CreatedAtAction(nameof(GetById), new { id = response.Id }, response);
     }
 
     // PUT /api/bookings/{id}
     [HttpPut("{id:guid}")]
-    public async Task<ActionResult<Api.Domain.Entities.Booking>> Update(Guid id, BookingUpdateDto dto)
-        => Ok(await _mediator.Send(new UpdateBookingCommand(id, dto)));
+    public async Task<ActionResult<BookingResponseDto>> Update(Guid id, BookingUpdateDto dto, CancellationToken ct = default)
+        => Ok(await _mediator.Send(new UpdateBookingCommand(id, dto), ct));
 
     // POST /api/bookings/{id}/confirm
     [HttpPost("{id:guid}/confirm")]
-    public async Task<ActionResult<Api.Domain.Entities.Booking>> Confirm(Guid id)
-        => Ok(await _mediator.Send(new ConfirmBookingCommand(id)));
+    public async Task<ActionResult<BookingResponseDto>> Confirm(Guid id, CancellationToken ct = default)
+        => Ok(await _mediator.Send(new ConfirmBookingCommand(id), ct));
 
     // POST /api/bookings/{id}/cancel
     [HttpPost("{id:guid}/cancel")]
-    public async Task<ActionResult<Api.Domain.Entities.Booking>> Cancel(Guid id)
-        => Ok(await _mediator.Send(new CancelBookingCommand(id)));
+    public async Task<ActionResult<BookingResponseDto>> Cancel(Guid id, CancellationToken ct = default)
+        => Ok(await _mediator.Send(new CancelBookingCommand(id), ct));
 }

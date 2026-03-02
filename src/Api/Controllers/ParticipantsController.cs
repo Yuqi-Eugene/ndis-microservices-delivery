@@ -1,5 +1,6 @@
 using Api.Application.Participants;
 using Api.Dtos;
+using Api.Dtos.Participants;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,35 +17,36 @@ public class ParticipantsController : ControllerBase
 
     // GET /api/participants?page=1&pageSize=20&q=gene
     [HttpGet]
-    public async Task<ActionResult<ParticipantListResult>> Get(
+    public async Task<ActionResult<ParticipantListResponseDto>> Get(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
-        [FromQuery] string? q = null)
-        => Ok(await _mediator.Send(new GetParticipantsQuery(page, pageSize, q)));
+        [FromQuery] string? q = null,
+        CancellationToken ct = default)
+        => Ok(await _mediator.Send(new GetParticipantsQuery(page, pageSize, q), ct));
 
     // GET /api/participants/{id}
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<Api.Domain.Entities.Participant>> GetById(Guid id)
-        => Ok(await _mediator.Send(new GetParticipantByIdQuery(id)));
+    public async Task<ActionResult<ParticipantResponseDto>> GetById(Guid id, CancellationToken ct = default)
+        => Ok(await _mediator.Send(new GetParticipantByIdQuery(id), ct));
 
     // POST /api/participants
     [HttpPost]
-    public async Task<ActionResult<Api.Domain.Entities.Participant>> Create(ParticipantCreateDto dto)
+    public async Task<ActionResult<ParticipantResponseDto>> Create(ParticipantCreateDto dto, CancellationToken ct = default)
     {
-        var entity = await _mediator.Send(new CreateParticipantCommand(dto));
-        return CreatedAtAction(nameof(GetById), new { id = entity.Id }, entity);
+        var response = await _mediator.Send(new CreateParticipantCommand(dto), ct);
+        return CreatedAtAction(nameof(GetById), new { id = response.Id }, response);
     }
 
     // PUT /api/participants/{id}
     [HttpPut("{id:guid}")]
-    public async Task<ActionResult<Api.Domain.Entities.Participant>> Update(Guid id, ParticipantUpdateDto dto)
-        => Ok(await _mediator.Send(new UpdateParticipantCommand(id, dto)));
+    public async Task<ActionResult<ParticipantResponseDto>> Update(Guid id, ParticipantUpdateDto dto, CancellationToken ct = default)
+        => Ok(await _mediator.Send(new UpdateParticipantCommand(id, dto), ct));
 
     // DELETE /api/participants/{id}
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct = default)
     {
-        await _mediator.Send(new DeleteParticipantCommand(id));
+        await _mediator.Send(new DeleteParticipantCommand(id), ct);
         return NoContent();
     }
 }

@@ -1,16 +1,23 @@
 using Api.Data;
 using Api.Domain.Entities;
+using Api.Dtos.Participants;
+using AutoMapper;
 using MediatR;
 
 namespace Api.Application.Participants;
 
-public sealed class CreateParticipantHandler : IRequestHandler<CreateParticipantCommand, Participant>
+public sealed class CreateParticipantHandler : IRequestHandler<CreateParticipantCommand, ParticipantResponseDto>
 {
     private readonly AppDbContext _db;
+    private readonly IMapper _mapper;
 
-    public CreateParticipantHandler(AppDbContext db) => _db = db;
+    public CreateParticipantHandler(AppDbContext db, IMapper mapper)
+    {
+        _db = db;
+        _mapper = mapper;
+    }
 
-    public async Task<Participant> Handle(CreateParticipantCommand request, CancellationToken ct)
+    public async Task<ParticipantResponseDto> Handle(CreateParticipantCommand request, CancellationToken ct)
     {
         var dto = request.Dto;
 
@@ -28,6 +35,6 @@ public sealed class CreateParticipantHandler : IRequestHandler<CreateParticipant
         _db.Participants.Add(entity);
         await _db.SaveChangesAsync(ct);
 
-        return entity;
+        return _mapper.Map<ParticipantResponseDto>(entity);
     }
 }
